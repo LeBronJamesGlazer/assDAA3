@@ -11,42 +11,44 @@ public class KruskalAlgorithm {
         public double executionTimeMs;
     }
 
-    public Result run(List<String> nodes, List<Edge> edges) {
+    private final Result result;
+    private final Map<String, String> parent = new HashMap<>();
+
+    public KruskalAlgorithm(List<String> nodes, List<Edge> edges) {
         long start = System.nanoTime();
-        Result r = new Result();
+        result = new Result();
 
         edges.sort(Comparator.comparingInt(e -> e.weight));
-        r.operationsCount += edges.size();
+        result.operationsCount += edges.size();
 
-        Map<String, String> parent = new HashMap<>();
         for (String n : nodes) parent.put(n, n);
 
-        java.util.function.Function<String, String> find = new java.util.function.Function<>() {
-            @Override
-            public String apply(String node) {
-                r.operationsCount++;
-                if (!parent.get(node).equals(node))
-                    parent.put(node, apply(parent.get(node)));
-                return parent.get(node);
-            }
-        };
-
-        java.util.function.BiConsumer<String, String> union = (a, b) -> {
-            r.operationsCount++;
-            parent.put(find.apply(a), find.apply(b));
-        };
-
         for (Edge e : edges) {
-            String root1 = find.apply(e.from);
-            String root2 = find.apply(e.to);
+            String root1 = find(e.from);
+            String root2 = find(e.to);
             if (!root1.equals(root2)) {
-                r.mstEdges.add(e);
-                r.totalCost += e.weight;
-                union.accept(root1, root2);
+                result.mstEdges.add(e);
+                result.totalCost += e.weight;
+                union(root1, root2);
             }
         }
+        result.executionTimeMs = (System.nanoTime() - start) / 1_000_000.0;
+    }
 
-        r.executionTimeMs = (System.nanoTime() - start) / 1_000_000.0;
-        return r;
+    public Result getResult() {
+        return result;
+    }
+
+    private String find(String node) {
+        result.operationsCount++;
+        if (!parent.get(node).equals(node)) {
+            parent.put(node, find(parent.get(node)));
+        }
+        return parent.get(node);
+    }
+
+    private void union(String a, String b) {
+        result.operationsCount++;
+        parent.put(find(a), find(b));
     }
 }

@@ -26,11 +26,34 @@ public class MSTComparison {
         String json = Files.readString(Paths.get("ass_3_input.json"));
         var input = gson.fromJson(json, InputGraphs.class);
 
-        PrimAlgorithm primAlgo = new PrimAlgorithm();
-        KruskalAlgorithm kruskalAlgo = new KruskalAlgorithm();
+        String filterType = "all";
+        if (args.length > 0) {
+            filterType = args[0].toLowerCase();
+        } else {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Select graph type to process (small, medium, large, all): ");
+            filterType = scanner.nextLine().trim().toLowerCase();
+        }
+
+        switch (filterType) {
+            case "small":
+            case "medium":
+            case "large":
+            case "all":
+                System.out.println("Filter mode: " + filterType);
+                break;
+            default:
+                System.out.println("Unknown filter type: " + filterType);
+                System.out.println("Valid options are: small, medium, large, all");
+                return;
+        }
+
         List<GraphResult> results = new ArrayList<>();
 
         for (GraphData g : input.graphs) {
+            if (!filterType.equals("all") && !g.type.trim().equalsIgnoreCase(filterType)) {
+                continue;
+            }
             GraphResult gr = new GraphResult();
             gr.graph_id = g.id;
             gr.graph_type = g.type; // ADD >>>
@@ -38,13 +61,26 @@ public class MSTComparison {
                     "vertices", g.nodes.size(),
                     "edges", g.edges.size()
             );
-            gr.prim = primAlgo.run(g.nodes, g.edges);
-            gr.kruskal = kruskalAlgo.run(g.nodes, g.edges);
+            PrimAlgorithm primAlgo = new PrimAlgorithm(g.nodes, g.edges);
+            gr.prim = primAlgo.getResult();
+
+            KruskalAlgorithm kruskalAlgo = new KruskalAlgorithm(g.nodes, g.edges);
+            gr.kruskal = kruskalAlgo.getResult();
             results.add(gr);
         }
 
         Output out = new Output();
-        out.results = results;
+        if (filterType.equals("all")) {
+            out.results = results;
+        } else {
+            List<GraphResult> filteredResults = new ArrayList<>();
+            for (GraphResult r : results) {
+                if (r.graph_type.trim().equalsIgnoreCase(filterType)) {
+                    filteredResults.add(r);
+                }
+            }
+            out.results = filteredResults;
+        }
 
         // --- Output JSON ---
         String outputJson = gson.toJson(out);
@@ -54,7 +90,7 @@ public class MSTComparison {
 
         // --- Summary Section ---  ADD >>>
         System.out.println("\n=== Summary by Graph Type ===");
-        printSummary(results);
+        printSummary(out.results);
     }
 
     private static void printSummary(List<GraphResult> results) {

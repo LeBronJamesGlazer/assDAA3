@@ -11,38 +11,57 @@ public class PrimAlgorithm {
         public double executionTimeMs;
     }
 
-    public Result run(List<String> nodes, List<Edge> edges) {
-        long start = System.nanoTime();
-        Result r = new Result();
+    private Map<String, List<Edge>> adj;
+    private Set<String> marked;
+    private PriorityQueue<Edge> pq;
+    private Result result;
 
-        Map<String, List<Edge>> adj = new HashMap<>();
-        for (String n : nodes) adj.put(n, new ArrayList<>());
+    public PrimAlgorithm(List<String> nodes, List<Edge> edges) {
+        long start = System.nanoTime();
+
+        // Build adjacency list
+        adj = new HashMap<>();
+        for (String node : nodes) {
+            adj.put(node, new ArrayList<>());
+        }
         for (Edge e : edges) {
             adj.get(e.from).add(e);
             adj.get(e.to).add(new Edge(e.to, e.from, e.weight));
         }
 
-        Set<String> visited = new HashSet<>();
-        PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(e -> e.weight));
-        visited.add(nodes.get(0));
-        pq.addAll(adj.get(nodes.get(0)));
-        r.operationsCount += pq.size();
+        marked = new HashSet<>();
+        pq = new PriorityQueue<>(Comparator.comparingInt(e -> e.weight));
+        result = new Result();
 
-        while (!pq.isEmpty() && visited.size() < nodes.size()) {
+        prim(nodes.get(0));
+
+        result.executionTimeMs = (System.nanoTime() - start) / 1_000_000.0;
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    private void prim(String start) {
+        scan(start);
+
+        while (!pq.isEmpty() && marked.size() < adj.size()) {
             Edge e = pq.poll();
-            r.operationsCount++;
-            if (visited.contains(e.to)) continue;
-            visited.add(e.to);
-            r.mstEdges.add(e);
-            r.totalCost += e.weight;
+            result.operationsCount++;
+            if (marked.contains(e.to)) continue;
+            result.mstEdges.add(e);
+            result.totalCost += e.weight;
+            scan(e.to);
+        }
+    }
 
-            for (Edge next : adj.get(e.to)) {
-                r.operationsCount++;
-                if (!visited.contains(next.to)) pq.add(next);
+    private void scan(String vertex) {
+        marked.add(vertex);
+        for (Edge e : adj.get(vertex)) {
+            result.operationsCount++;
+            if (!marked.contains(e.to)) {
+                pq.add(e);
             }
         }
-
-        r.executionTimeMs = (System.nanoTime() - start) / 1_000_000.0;
-        return r;
     }
 }
