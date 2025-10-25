@@ -16,7 +16,7 @@ public class PrimAlgorithm {
     private PriorityQueue<Edge> pq;
     private Result result;
 
-    public PrimAlgorithm(List<String> nodes, List<Edge> edges) {
+    public PrimAlgorithm(GraphData graph, List<String> nodes, List<Edge> edges) {
         long start = System.nanoTime();
 
         // Build adjacency list
@@ -25,12 +25,14 @@ public class PrimAlgorithm {
             adj.put(node, new ArrayList<>());
         }
         for (Edge e : edges) {
-            adj.get(e.from).add(e);
-            adj.get(e.to).add(new Edge(e.to, e.from, e.weight));
+            if (!graph.hasVertex(e.getFrom()) || !graph.hasVertex(e.getTo())) continue;
+            if (!graph.hasEdgeBetween(e.getFrom(), e.getTo())) continue;
+            adj.get(e.getFrom()).add(e);
+            adj.get(e.getTo()).add(new Edge(e.getTo(), e.getFrom(), e.getWeight()));
         }
 
         marked = new HashSet<>();
-        pq = new PriorityQueue<>(Comparator.comparingInt(e -> e.weight));
+        pq = new PriorityQueue<>(Comparator.comparingInt(Edge::getWeight));
         result = new Result();
 
         prim(nodes.get(0));
@@ -48,10 +50,10 @@ public class PrimAlgorithm {
         while (!pq.isEmpty() && marked.size() < adj.size()) {
             Edge e = pq.poll();
             result.operationsCount++;
-            if (marked.contains(e.to)) continue;
+            if (marked.contains(e.getTo())) continue;
             result.mstEdges.add(e);
-            result.totalCost += e.weight;
-            scan(e.to);
+            result.totalCost += e.getWeight();
+            scan(e.getTo());
         }
     }
 
@@ -59,7 +61,7 @@ public class PrimAlgorithm {
         marked.add(vertex);
         for (Edge e : adj.get(vertex)) {
             result.operationsCount++;
-            if (!marked.contains(e.to)) {
+            if (!marked.contains(e.getTo())) {
                 pq.add(e);
             }
         }

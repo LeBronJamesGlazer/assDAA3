@@ -14,21 +14,28 @@ public class KruskalAlgorithm {
     private final Result result;
     private final Map<String, String> parent = new HashMap<>();
 
-    public KruskalAlgorithm(List<String> nodes, List<Edge> edges) {
+    public KruskalAlgorithm(GraphData graph, List<String> nodes, List<Edge> edges) {
         long start = System.nanoTime();
         result = new Result();
 
-        edges.sort(Comparator.comparingInt(e -> e.weight));
+        edges.sort(Comparator.comparingInt(Edge::getWeight));
         result.operationsCount += edges.size();
 
         for (String n : nodes) parent.put(n, n);
 
         for (Edge e : edges) {
-            String root1 = find(e.from);
-            String root2 = find(e.to);
+            if (!graph.hasVertex(e.getFrom()) || !graph.hasVertex(e.getTo())) {
+                continue;
+            }
+            if (!graph.hasEdgeBetween(e.getFrom(), e.getTo())) {
+                continue;
+            }
+
+            String root1 = find(e.getFrom());
+            String root2 = find(e.getTo());
             if (!root1.equals(root2)) {
                 result.mstEdges.add(e);
-                result.totalCost += e.weight;
+                result.totalCost += e.getWeight();
                 union(root1, root2);
             }
         }

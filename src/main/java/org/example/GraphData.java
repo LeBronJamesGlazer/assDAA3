@@ -3,10 +3,10 @@ package org.example;
 import java.util.List;
 
 public class GraphData {
-    public int id;
-    public String type;
-    public List<String> nodes;
-    public List<Edge> edges;
+private int id;
+private String type;
+private List<String> nodes;
+private List<Edge> edges;
 
     public String getType() {
         return type;
@@ -38,5 +38,20 @@ public class GraphData {
 
     public void setEdges(List<Edge> edges) {
         this.edges = edges;
+    }
+
+    public boolean hasVertex(String node) {
+        return nodes != null && nodes.contains(node);
+    }
+
+    public boolean hasEdgeBetween(String node1, String node2) {
+        if (edges == null) return false;
+        for (Edge e : edges) {
+            if ((e.getFrom().equals(node1) && e.getTo().equals(node2)) ||
+                (e.getFrom().equals(node2) && e.getTo().equals(node1))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

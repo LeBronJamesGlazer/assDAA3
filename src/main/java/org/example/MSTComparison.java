@@ -9,7 +9,7 @@ public class MSTComparison {
 
     static class GraphResult {
         int graph_id;
-        String graph_type; // ADD >>> store type ("small", "medium", "large")
+        String graph_type;
         Map<String, Integer> input_stats;
         PrimAlgorithm.Result prim;
         KruskalAlgorithm.Result kruskal;
@@ -22,7 +22,6 @@ public class MSTComparison {
     public static void main(String[] args) throws Exception {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        // --- Read Input ---
         String json = Files.readString(Paths.get("ass_3_input.json"));
         var input = gson.fromJson(json, InputGraphs.class);
 
@@ -51,20 +50,20 @@ public class MSTComparison {
         List<GraphResult> results = new ArrayList<>();
 
         for (GraphData g : input.graphs) {
-            if (!filterType.equals("all") && !g.type.trim().equalsIgnoreCase(filterType)) {
+            if (!filterType.equals("all") && !g.getType().trim().equalsIgnoreCase(filterType)) {
                 continue;
             }
             GraphResult gr = new GraphResult();
-            gr.graph_id = g.id;
-            gr.graph_type = g.type; // ADD >>>
+            gr.graph_id = g.getId();
+            gr.graph_type = g.getType();
             gr.input_stats = Map.of(
-                    "vertices", g.nodes.size(),
-                    "edges", g.edges.size()
+                    "vertices", g.getNodes().size(),
+                    "edges", g.getEdges().size()
             );
-            PrimAlgorithm primAlgo = new PrimAlgorithm(g.nodes, g.edges);
+            PrimAlgorithm primAlgo = new PrimAlgorithm(g, g.getNodes(), g.getEdges());
             gr.prim = primAlgo.getResult();
 
-            KruskalAlgorithm kruskalAlgo = new KruskalAlgorithm(g.nodes, g.edges);
+            KruskalAlgorithm kruskalAlgo = new KruskalAlgorithm(g, g.getNodes(), g.getEdges());
             gr.kruskal = kruskalAlgo.getResult();
             results.add(gr);
         }
@@ -96,7 +95,6 @@ public class MSTComparison {
     private static void printSummary(List<GraphResult> results) {
         Map<String, List<GraphResult>> grouped = new LinkedHashMap<>();
 
-        // group by type
         for (GraphResult r : results) {
             grouped.computeIfAbsent(r.graph_type, k -> new ArrayList<>()).add(r);
         }
